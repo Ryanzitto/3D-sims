@@ -8,10 +8,31 @@ const io = new Server({
 
 io.listen(3000);
 
-const characters = [];
+let characters = [];
+
+const items = {
+  chair: {
+    name: "Chair",
+    size: [2, 2],
+  },
+  couch: {
+    name: "Couch",
+    size: [3, 2],
+  },
+};
+
+const map = {
+  size: [20, 10],
+  gridDivision: 2,
+  items: [
+    { ...items.chair, gridPosition: [4, 4] },
+    { ...items.chair, gridPosition: [4, 6], rotation: 2 },
+    { ...items.couch, gridPosition: [10, 2], rotation: 0 },
+  ],
+};
 
 const generateRandomPosition = () => {
-  return [Math.random() * 3, 0, Math.random() * 3];
+  return [Math.random() * map.size[0], 0, Math.random() * map.size[1]];
 };
 
 const generateRandomHexColor = () => {
@@ -29,7 +50,11 @@ io.on("connection", (socket) => {
 
   console.log("user connected");
 
-  socket.emit("hello");
+  socket.emit("hello", {
+    map,
+    characters,
+    id: socket.id,
+  });
 
   io.emit("characters", characters);
 
@@ -43,10 +68,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("user disconnected");
-
-    characters.splice(
-      characters.findIndex((character) => character.id === socket.id, 1)
-    );
+    characters = characters.filter((character) => character.id != socket.id);
     io.emit("characters", characters);
   });
 });
